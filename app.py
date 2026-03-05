@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (Clean & Static)
+# 2. Premium Enterprise-grade Custom CSS (Clean & Static + Neon Fire)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -54,7 +54,7 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* รูปภาพให้มีขอบเนียนๆ และมีเงาบางๆ (เหลือไว้แค่ Hover Effect ตอนเอาเมาส์ชี้) */
+    /* รูปภาพให้มีขอบเนียนๆ และมีเงาบางๆ */
     img {
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
@@ -73,6 +73,17 @@ st.markdown("""
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
+    }
+
+    /* 🔥 CSS สร้างไฟ Neon Glow ขนาดเล็กและดันชิดขวาสุด 🔥 */
+    div.element-container:has(#neon-fire-marker) + div.element-container div[data-testid="stMetricValue"]::after {
+        content: "🔥";
+        float: right;             /* ดันไปชิดขวาสุดของกล่อง */
+        font-size: 0.85rem;       /* ปรับขนาดให้เล็กลงมากตามคำขอ */
+        text-shadow: 0 0 6px #FF4500, 0 0 14px #FF4500, 0 0 20px #FF0000; /* เอฟเฟกต์แสงเรือง */
+        margin-top: 0.4rem;       /* จัดระดับความสูงให้บาลานซ์กับตัวเลข */
+        margin-right: 0.5rem;     /* เว้นระยะขอบขวาเล็กน้อยให้ดูสวย */
+        opacity: 0.95;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -171,6 +182,7 @@ if uploaded_file is not None:
         max_psnr = 0
         best_img = None
 
+        # คำนวณหาที่ 1 ให้เสร็จก่อน
         for name, f_img in filters.items():
             current_psnr = psnr_func(img_clean, f_img)
             try:
@@ -191,13 +203,18 @@ if uploaded_file is not None:
                 best_filter_name = name
                 best_img = f_img
 
+        # วาดหน้าจอ UI
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # แสดงค่าปกติตรงๆ แบบไม่มีสัญลักษณ์ถ้วยรางวัลแล้ว
+                # ถ้าตัวนี้คือที่ 1 ให้วาง Marker นำทางไว้ให้ CSS ดึงไฟนีออนมาแปะด้านขวา
+                if name == best_filter_name:
+                    st.markdown("<span id='neon-fire-marker'></span>", unsafe_allow_html=True)
+                
+                # แสดงค่าเป็นตัวเลขปกติ (ไฟถูกจัดการด้วย CSS)
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
@@ -224,7 +241,7 @@ if uploaded_file is not None:
         )
 
 else:
-    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ไม่มีอนิเมชั่น ---
+    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ไม่มีอนิเมชัน ---
     st.markdown("""
         <div style="
             display: flex;
