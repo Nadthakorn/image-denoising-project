@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (รูปภาพ 3D นูนทะลุจอ & ตัวเลขเล็กลงเฉพาะด้านล่าง)
+# 2. Premium Enterprise-grade Custom CSS
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -54,31 +54,44 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* ✨ ปรับให้รูปภาพดู "นูน" และเป็น 3 มิติอย่างเห็นได้ชัด ✨ */
+    /* ✨ 1. ปรับรูปภาพให้นูน 3D เงาออกทางขวา และลดการเด้งตอน Hover ✨ */
     img {
         border-radius: 12px;
         
-        /* สร้างมิติขอบหนา: ขอบบนซ้ายสว่างรับแสง ขอบล่างขวามืดเป็นเงา */
-        border-top: 2px solid rgba(255, 255, 255, 0.15);
-        border-left: 2px solid rgba(255, 255, 255, 0.1);
-        border-bottom: 2px solid rgba(0, 0, 0, 0.6);
-        border-right: 2px solid rgba(0, 0, 0, 0.4);
+        /* ขอบบางๆ ด้านซ้าย/บนรับแสง ด้านขวา/ล่างมืดเป็นเงา */
+        border-top: 1px solid rgba(255, 255, 255, 0.2);
+        border-left: 1px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 2px solid rgba(0, 0, 0, 0.4);
+        border-right: 2px solid rgba(0, 0, 0, 0.5);
         
-        /* เงา 2 ชั้นลึกๆ ดันให้ภาพเด้งออกจากจอ */
+        /* เปลี่ยนแกน X (ตัวแรก) ให้เป็นบวกเยอะๆ เพื่อดันเงาไปด้านขวา */
         box-shadow: 
-            0px 15px 25px rgba(0, 0, 0, 0.5), 
-            0px 5px 10px rgba(0, 0, 0, 0.3);
+            10px 10px 20px rgba(0, 0, 0, 0.4), 
+            4px 4px 8px rgba(0, 0, 0, 0.2);
             
-        transform: translateY(-2px); /* ลอยขึ้นมานิดนึงเป็นค่าเริ่มต้น */
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     
     img:hover {
-        transform: translateY(-8px) scale(1.03); /* ตอนชี้ให้ลอยสูงขึ้นและขยาย */
+        /* ลดขนาดความเด้ง/ขยาย ให้ดูเนียนและไม่ใหญ่เกินไป */
+        transform: translateY(-3px) scale(1.01); 
+        /* เงาขยายออกทางขวามากขึ้น */
         box-shadow: 
-            0px 25px 35px rgba(0, 0, 0, 0.6), 
-            0px 10px 15px rgba(0, 0, 0, 0.4);
-        border-top: 2px solid rgba(255, 255, 255, 0.3); /* เพิ่มความสว่างขอบบนรับแสงตอนชี้ */
+            18px 18px 30px rgba(0, 0, 0, 0.5), 
+            6px 6px 12px rgba(0, 0, 0, 0.3);
+        border-top: 1px solid rgba(255, 255, 255, 0.3); 
+    }
+
+    /* ✨ 2. แก้ปัญหาปุ่ม Fullscreen โดนบัง & ปรับตำแหน่ง ✨ */
+    button[title="View fullscreen"] {
+        z-index: 999 !important; /* บังคับอยู่ชั้นบนสุด ทะลุรูปภาพ */
+        right: 15px !important;  /* ดันปุ่มเข้ามาจากขอบขวา */
+        top: 15px !important;    /* ดันปุ่มลงมาจากขอบบน */
+        background-color: rgba(0, 0, 0, 0.4) !important; /* เพิ่มพื้นหลังให้ปุ่มชัดเจนขึ้น */
+        border-radius: 6px !important;
+    }
+    button[title="View fullscreen"]:hover {
+        background-color: rgba(0, 0, 0, 0.7) !important;
     }
     
     /* Center text for algorithm titles */
@@ -92,14 +105,10 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
-    /* ✨ ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
-    
-    /* ลดขนาดตัวเลขหลัก (PSNR/SSIM) เฉพาะกล่องที่มีลูกศร Delta */
+    /* ✨ 3. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
     div[data-testid="stMetric"]:has(div[data-testid="stMetricDelta"]) div[data-testid="stMetricValue"] {
         font-size: 1.6rem !important; 
     }
-    
-    /* ลดขนาดตัวเลขสีเขียวและลูกศร */
     div[data-testid="stMetricDelta"] {
         font-size: 0.9rem !important; 
     }
