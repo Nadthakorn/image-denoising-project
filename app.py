@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (Clean & Static - ไม่มีไฟแล้ว)
+# 2. Premium Enterprise-grade Custom CSS (ปรับภาพ 3D & ลดขนาดตัวเลข)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -54,15 +54,16 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* รูปภาพให้มีขอบเนียนๆ และมีเงาบางๆ */
+    /* ✨ ปรับให้รูปภาพดูมีมิติ 3D มากขึ้น (Deep Shadow & Lift Effect) ✨ */
     img {
-        border-radius: 8px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
-        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        border-radius: 10px;
+        /* ใช้เงา 2 ชั้น ชั้นแรกให้มิติความลึก ชั้นสองให้ขอบฟุ้ง */
+        box-shadow: rgba(0, 0, 0, 0.3) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px; 
+        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     img:hover {
-        transform: translateY(-2px); 
-        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+        transform: translateY(-5px) scale(1.01); /* ขยับลอยขึ้นและซูมนิดๆ */
+        box-shadow: rgba(0, 0, 0, 0.4) 0px 20px 30px, rgba(0, 0, 0, 0.25) 0px 15px 12px;
     }
     
     /* Center text for algorithm titles */
@@ -70,9 +71,23 @@ st.markdown("""
         text-align: center;
         font-weight: 600;
         margin-bottom: 1rem;
+        margin-top: 0.5rem;
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
+    }
+
+    /* ✨ ลดขนาดตัวเลข Metric ลงตามที่ขอ ✨ */
+    div[data-testid="stMetricValue"] {
+        font-size: 1.5rem !important; /* ลดขนาดตัวเลขหลัก (PSNR/SSIM) */
+        font-weight: 600;
+    }
+    div[data-testid="stMetricDelta"] {
+        font-size: 0.85rem !important; /* ลดขนาดตัวเลขสีเขียว (Delta) */
+    }
+    div[data-testid="stMetricDelta"] svg {
+        width: 0.85rem !important; /* ลดขนาดลูกศรให้สมดุลกับตัวเลข */
+        height: 0.85rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -199,7 +214,7 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # แสดงค่าเป็นตัวเลขปกติ คลีนๆ ไม่ต้องมีลูกเล่นเพิ่มเติม
+                # แสดงค่าเป็นตัวเลขปกติ คลีนๆ
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
