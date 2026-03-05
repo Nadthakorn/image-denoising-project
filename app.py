@@ -54,7 +54,7 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* ✨ 1. ปรับรูปภาพให้นูน 3D เงาออกทางขวา และลดการเด้งตอน Hover ✨ */
+    /* ✨ 1. รูปภาพ 3D นูน เงาออกทางขวา ✨ */
     img {
         border-radius: 12px;
         border-top: 1px solid rgba(255, 255, 255, 0.2);
@@ -65,6 +65,10 @@ st.markdown("""
             10px 10px 20px rgba(0, 0, 0, 0.4), 
             4px 4px 8px rgba(0, 0, 0, 0.2);
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        /* บังคับรูปให้อยู่ตรงกลางคอลัมน์เสมอ */
+        display: block !important;
+        margin-left: auto !important;
+        margin-right: auto !important;
     }
     
     img:hover {
@@ -87,19 +91,21 @@ st.markdown("""
         background-color: rgba(0, 0, 0, 0.7) !important;
     }
     
-    /* ✨ 3. ใส่กรอบให้ชื่อฟิลเตอร์ ขอบมนและขนาดกะทัดรัด ✨ */
+    /* ✨ 3. ป้ายชื่ออัลกอริทึม ขอบมนและขนาดกะทัดรัด ✨ */
     .algo-title {
         text-align: center;
         font-weight: 600;
-        margin: 0.5rem auto 1rem auto; /* จัดให้อยู่กึ่งกลางคอลัมน์ */
-        font-size: 0.9rem; /* ปรับขนาดให้เล็กลงนิดนึงจะได้ดูมินิมอล */
+        margin: 0.5rem 0 1rem 0; /* เอา margin: auto ออกเพื่อใช้การจัดกึ่งกลางจาก parent */
+        font-size: 0.9rem; 
         color: #E2E8F0;
         letter-spacing: 0.5px;
-        width: fit-content; /* บังคับให้ขนาดกล่องพอดีกับตัวอักษร */
-        padding: 4px 16px; /* ระยะห่างกรอบ (บนล่าง 4px, ซ้ายขวา 16px) */
-        border-radius: 50px; /* ขอบโค้งมนแบบแคปซูล ไม่เหลี่ยมแน่นอน */
-        border: 1px solid rgba(255, 255, 255, 0.15); /* ขอบสีขาวจางๆ */
-        background-color: rgba(255, 255, 255, 0.05); /* พื้นหลังใสๆ */
+        width: fit-content; 
+        padding: 4px 16px; 
+        border-radius: 50px; 
+        border: 1px solid rgba(255, 255, 255, 0.15); 
+        background-color: rgba(255, 255, 255, 0.05); 
+        /* บังคับตัวมันเองให้อยู่ตรงกลาง */
+        display: inline-block !important; 
     }
 
     /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
@@ -112,6 +118,13 @@ st.markdown("""
     div[data-testid="stMetricDelta"] svg {
         width: 0.9rem !important;
         height: 0.9rem !important;
+    }
+
+    /* ✨ 5. จัดองค์ประกอบหลักภายในคอลัมน์เปรียบเทียบให้อยู่ตรงกลางเสมอกัน ✨ */
+    /* เลือกเฉพาะคอลัมน์ภายในบล็อกเปรียบเทียบอัลกอริทึม */
+    div[data-testid="stVerticalBlock"]:has(.algo-title) > div[data-testid="column"] > div > div {
+        align-items: center !important; /* จัดองค์ประกอบแนวตั้งให้อยู่กึ่งกลางแนวนอน */
+        text-align: center !important;  /* จัดข้อความภายในองค์ประกอบให้อยู่กึ่งกลาง */
     }
     </style>
 """, unsafe_allow_html=True)
@@ -235,9 +248,11 @@ if uploaded_file is not None:
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
+                # แสดงป้ายชื่อในกรอบแคปซูล (ถูก CSS บังคับให้อยู่ตรงกลาง)
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
+                # แสดงค่า Metric (ถูก CSS บังคับให้อยู่ตรงกลางคอลัมน์)
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
