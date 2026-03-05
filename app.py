@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (ปรับภาพ 3D & ลดขนาดตัวเลข)
+# 2. Premium Enterprise-grade Custom CSS (รูปภาพ 3D นูนทะลุจอ & ตัวเลขเล็กลงเฉพาะด้านล่าง)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -54,16 +54,31 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* ✨ ปรับให้รูปภาพดูมีมิติ 3D มากขึ้น (Deep Shadow & Lift Effect) ✨ */
+    /* ✨ ปรับให้รูปภาพดู "นูน" และเป็น 3 มิติอย่างเห็นได้ชัด ✨ */
     img {
-        border-radius: 10px;
-        /* ใช้เงา 2 ชั้น ชั้นแรกให้มิติความลึก ชั้นสองให้ขอบฟุ้ง */
-        box-shadow: rgba(0, 0, 0, 0.3) 0px 14px 28px, rgba(0, 0, 0, 0.22) 0px 10px 10px; 
+        border-radius: 12px;
+        
+        /* สร้างมิติขอบหนา: ขอบบนซ้ายสว่างรับแสง ขอบล่างขวามืดเป็นเงา */
+        border-top: 2px solid rgba(255, 255, 255, 0.15);
+        border-left: 2px solid rgba(255, 255, 255, 0.1);
+        border-bottom: 2px solid rgba(0, 0, 0, 0.6);
+        border-right: 2px solid rgba(0, 0, 0, 0.4);
+        
+        /* เงา 2 ชั้นลึกๆ ดันให้ภาพเด้งออกจากจอ */
+        box-shadow: 
+            0px 15px 25px rgba(0, 0, 0, 0.5), 
+            0px 5px 10px rgba(0, 0, 0, 0.3);
+            
+        transform: translateY(-2px); /* ลอยขึ้นมานิดนึงเป็นค่าเริ่มต้น */
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
+    
     img:hover {
-        transform: translateY(-5px) scale(1.01); /* ขยับลอยขึ้นและซูมนิดๆ */
-        box-shadow: rgba(0, 0, 0, 0.4) 0px 20px 30px, rgba(0, 0, 0, 0.25) 0px 15px 12px;
+        transform: translateY(-8px) scale(1.03); /* ตอนชี้ให้ลอยสูงขึ้นและขยาย */
+        box-shadow: 
+            0px 25px 35px rgba(0, 0, 0, 0.6), 
+            0px 10px 15px rgba(0, 0, 0, 0.4);
+        border-top: 2px solid rgba(255, 255, 255, 0.3); /* เพิ่มความสว่างขอบบนรับแสงตอนชี้ */
     }
     
     /* Center text for algorithm titles */
@@ -77,17 +92,20 @@ st.markdown("""
         letter-spacing: 0.5px;
     }
 
-    /* ✨ ลดขนาดตัวเลข Metric ลงตามที่ขอ ✨ */
-    div[data-testid="stMetricValue"] {
-        font-size: 1.5rem !important; /* ลดขนาดตัวเลขหลัก (PSNR/SSIM) */
-        font-weight: 600;
+    /* ✨ ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
+    
+    /* ลดขนาดตัวเลขหลัก (PSNR/SSIM) เฉพาะกล่องที่มีลูกศร Delta */
+    div[data-testid="stMetric"]:has(div[data-testid="stMetricDelta"]) div[data-testid="stMetricValue"] {
+        font-size: 1.6rem !important; 
     }
+    
+    /* ลดขนาดตัวเลขสีเขียวและลูกศร */
     div[data-testid="stMetricDelta"] {
-        font-size: 0.85rem !important; /* ลดขนาดตัวเลขสีเขียว (Delta) */
+        font-size: 0.9rem !important; 
     }
     div[data-testid="stMetricDelta"] svg {
-        width: 0.85rem !important; /* ลดขนาดลูกศรให้สมดุลกับตัวเลข */
-        height: 0.85rem !important;
+        width: 0.9rem !important;
+        height: 0.9rem !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -165,6 +183,7 @@ if uploaded_file is not None:
     with col_metrics:
         with st.container(border=True):
             st.markdown("<h5 style='color: #E2E8F0; margin-bottom: 1rem;'>Baseline Metrics</h5>", unsafe_allow_html=True)
+            # ตัวเลขตรงนี้จะใหญ่เท่าเดิม! เพราะไม่มี Delta
             st.metric(label="PSNR (Higher is better)", value=f"{base_psnr:.2f} dB")
             st.divider()
             st.metric(label="SSIM (Closer to 1 is better)", value=f"{base_ssim:.4f}")
@@ -214,7 +233,7 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # แสดงค่าเป็นตัวเลขปกติ คลีนๆ
+                # ตัวเลขตรงนี้จะเล็กลงตามที่คุณรีเควส
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
