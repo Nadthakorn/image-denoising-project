@@ -9,7 +9,7 @@ import io
 import streamlit.components.v1 as components
 
 # 1. Page Configuration
-st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
+st.set_page_config(page_title="Image Denoising Project", layout="wide")
 
 # 2. Premium Enterprise-grade Custom CSS
 st.markdown("""
