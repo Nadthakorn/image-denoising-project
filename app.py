@@ -10,17 +10,17 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (แก้ไขให้ Sidebar Toggle กลับมา)
+# 2. Premium Enterprise-grade Custom CSS + ✨ ADDED: Scroll Animation CSS ✨
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
-    header {background-color: transparent !important;} /* เปลี่ยนจาก visibility: hidden เป็นโปร่งใส */
+    header {background-color: transparent !important;}
     
     /* Optimize container padding */
     .block-container {
-        padding-top: 1rem; /* ขยับขึ้นนิดหน่อยชดเชยพื้นที่ header */
+        padding-top: 1rem;
         padding-bottom: 2rem;
         max-width: 90%; 
         font-family: 'Inter', 'Segoe UI', sans-serif;
@@ -73,6 +73,30 @@ st.markdown("""
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
+    }
+
+    /* =========================================================
+       ✨ เริ่มส่วนโค้ดอนิเมชั่นขยับตอนเลื่อนหน้าจอ (Scroll Animation) ✨
+       ========================================================= */
+    
+    /* นิยาม State เริ่มต้นของ element: ซ่อนไว้, จางลง, ดันลงล่างเล็กน้อย */
+    .stMarkdown, .stShadowBox, .algo-title, div[class*="stImage"] {
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+        will-change: opacity, transform;
+    }
+
+    /* นิยาม State เมื่อ element ปรากฏในหน้าจอ (JS จะเติม class นี้ให้) */
+    .element-visible {
+        opacity: 1 !important;
+        transform: translateY(0) !important;
+    }
+
+    /* ยกเว้นส่วน Empty State ไม่ต้องทำอนิเมชั่นตอนโหลด */
+    div[style*="min-height: 50vh"] .stMarkdown {
+        opacity: 1;
+        transform: translateY(0);
     }
     </style>
 """, unsafe_allow_html=True)
@@ -250,3 +274,55 @@ else:
             </div>
         </div>
     """, unsafe_allow_html=True)
+
+# =========================================================
+# ✨ เริ่มส่วนโค้ด JavaScript (ต่อท้ายสุดของไฟล์) ✨
+# ทำหน้าที่ตรวจจับการเลื่อนหน้าจอ และสั่งให้ element ขยับขึ้นมา
+# =========================================================
+
+st.markdown("""
+<script>
+    // ฟังก์ชันสำหรับตรวจจับ element ที่ปรากฏใน viewport
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            // ถ้า element เลื่อนเข้ามาในจอ
+            if (entry.isIntersecting) {
+                // เติม class 'element-visible' เพื่อเริ่มอนิเมชั่น
+                entry.target.classList.add('element-visible');
+                // ตรวจจับครั้งเดียวพอ ไม่ต้องทำซ้ำตอนเลื่อนขึ้น
+                observer.unobserve(entry.target); 
+            }
+        });
+    }, {
+        // เริ่มทำงานเมื่อ element เข้ามาในจอ 10%
+        threshold: 0.1 
+    });
+
+    // เลือก element หลักๆ ที่ต้องการทำอนิเมชั่น
+    function applyAnimation() {
+        const selectors = [
+            '.stMarkdown',        // ข้อความ, หัวข้อ
+            '.stShadowBox',       // metric containers
+            '.algo-title',        // ชื่อฟิลเตอร์
+            'div[class*="stImage"]' // รูปภาพทั้งหมด
+        ];
+        
+        selectors.forEach(selector => {
+            document.querySelectorAll(selector).forEach(el => {
+                observer.observe(el);
+            });
+        });
+    }
+
+    // รันฟังก์ชันหลังจาก Streamlit render เสร็จเล็กน้อย
+    // เนื่องจาก Streamlit เป็น Dynamic web ต้องรอแป๊บนึง
+    setTimeout(applyAnimation, 300);
+
+    // รองรับ Dynamic rerun ของ Streamlit
+    // เมื่อมีการอัปโหลดรูปใหม่ ต้องเรียกใช้ Observer ใหม่
+    if (window.parent) {
+        window.parent.addEventListener('streamlit:rerun', setTimeout(applyAnimation, 300));
+    }
+
+</script>
+""", unsafe_allow_html=True)
