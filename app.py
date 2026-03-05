@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (Clean & Static + Neon Fire on Delta)
+# 2. Premium Enterprise-grade Custom CSS (Clean & Static - ไม่มีไฟแล้ว)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -73,16 +73,6 @@ st.markdown("""
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
-    }
-
-    /* 🔥 CSS ย้ายไฟไปต่อท้ายเลข Delta สีเขียว 🔥 */
-    div.element-container:has(#neon-fire-marker) + div.element-container div[data-testid="stMetricDelta"]::after {
-        content: "🔥";
-        font-size: 0.85rem;       /* ขนาดพอดีกับกรอบสีเขียว */
-        text-shadow: 0 0 5px #FF4500, 0 0 12px #FF0000; /* แสง Glow เบาๆ */
-        margin-left: 6px;         /* เว้นระยะห่างจากตัวเลขสีเขียวนิดนึง */
-        display: inline-block;
-        vertical-align: middle;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -209,11 +199,7 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # ถ้าตัวนี้คือที่ 1 ให้วาง Marker นำทางไว้ให้ CSS ดึงไฟนีออนมาแปะที่กล่อง Delta
-                if name == best_filter_name:
-                    st.markdown("<span id='neon-fire-marker'></span>", unsafe_allow_html=True)
-                
-                # แสดงค่าเป็นตัวเลขปกติ (ไฟถูกจัดการด้วย CSS ให้ไปต่อท้ายกรอบสีเขียว)
+                # แสดงค่าเป็นตัวเลขปกติ คลีนๆ ไม่ต้องมีลูกเล่นเพิ่มเติม
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
@@ -240,7 +226,7 @@ if uploaded_file is not None:
         )
 
 else:
-    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ไม่มีอนิเมชัน ---
+    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ---
     st.markdown("""
         <div style="
             display: flex;
