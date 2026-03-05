@@ -14,7 +14,7 @@ st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 # 2. Premium Enterprise-grade Custom CSS
 st.markdown("""
     <style>
-    /* Remove default Streamlit branding */
+    /* Remove default Streamlit branding but KEEP header for sidebar toggle */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {background-color: transparent !important;} 
@@ -80,16 +80,23 @@ st.markdown("""
         border-top: 1px solid rgba(255, 255, 255, 0.3); 
     }
 
-    /* ✨ 2. ซ่อนปุ่ม Fullscreen เดิมของ Streamlit ทิ้งไป (อัปเดตให้บังคับซ่อน 100%) ✨ */
-    button[title="View fullscreen"],
-    button[title="Fullscreen"],
+    /* ✨ 2. ลบปุ่ม Fullscreen แบบถอนรากถอนโคน (คลุมทุกลักษณะโค้ดของ Streamlit) ✨ */
+    [data-testid="stImage"] button,
+    [data-testid="stImage"] [role="button"],
     [data-testid="StyledFullScreenButton"],
-    div[data-testid="stImage"] button,
-    .stImage > div > button {
+    button[title*="fullscreen"],
+    button[title*="Fullscreen"],
+    button[title*="เต็มหน้าจอ"],
+    button[title*="ขยาย"],
+    div:has(> img) > div > button {
         display: none !important;
         visibility: hidden !important;
         opacity: 0 !important;
+        width: 0 !important;
+        height: 0 !important;
         pointer-events: none !important;
+        position: absolute !important;
+        z-index: -9999 !important;
     }
     
     /* ✨ 3. ป้ายชื่ออัลกอริทึม ขยายให้กว้างเท่ารูปภาพ ✨ */
