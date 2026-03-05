@@ -65,7 +65,6 @@ st.markdown("""
             10px 10px 20px rgba(0, 0, 0, 0.4), 
             4px 4px 8px rgba(0, 0, 0, 0.2);
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        /* บังคับรูปให้อยู่ตรงกลางคอลัมน์เสมอ */
         display: block !important;
         margin-left: auto !important;
         margin-right: auto !important;
@@ -91,21 +90,21 @@ st.markdown("""
         background-color: rgba(0, 0, 0, 0.7) !important;
     }
     
-    /* ✨ 3. ป้ายชื่ออัลกอริทึม ขอบมนและขนาดกะทัดรัด ✨ */
+    /* ✨ 3. ป้ายชื่ออัลกอริทึม ขยายให้กว้างเท่ารูปภาพ ✨ */
     .algo-title {
         text-align: center;
         font-weight: 600;
-        margin: 0.5rem 0 1rem 0; /* เอา margin: auto ออกเพื่อใช้การจัดกึ่งกลางจาก parent */
+        margin: 0.5rem 0 1rem 0; 
         font-size: 0.9rem; 
         color: #E2E8F0;
         letter-spacing: 0.5px;
-        width: fit-content; 
-        padding: 4px 16px; 
-        border-radius: 50px; 
+        width: 100%; /* บังคับให้กว้าง 100% เท่ากับรูปภาพ */
+        box-sizing: border-box; /* ป้องกันไม่ให้ขอบล้น */
+        padding: 6px 10px; 
+        border-radius: 10px; /* โค้งมนพอดีๆ รับกับขอบรูป */
         border: 1px solid rgba(255, 255, 255, 0.15); 
         background-color: rgba(255, 255, 255, 0.05); 
-        /* บังคับตัวมันเองให้อยู่ตรงกลาง */
-        display: inline-block !important; 
+        display: block !important; 
     }
 
     /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
@@ -121,10 +120,9 @@ st.markdown("""
     }
 
     /* ✨ 5. จัดองค์ประกอบหลักภายในคอลัมน์เปรียบเทียบให้อยู่ตรงกลางเสมอกัน ✨ */
-    /* เลือกเฉพาะคอลัมน์ภายในบล็อกเปรียบเทียบอัลกอริทึม */
     div[data-testid="stVerticalBlock"]:has(.algo-title) > div[data-testid="column"] > div > div {
-        align-items: center !important; /* จัดองค์ประกอบแนวตั้งให้อยู่กึ่งกลางแนวนอน */
-        text-align: center !important;  /* จัดข้อความภายในองค์ประกอบให้อยู่กึ่งกลาง */
+        align-items: center !important; 
+        text-align: center !important;  
     }
     </style>
 """, unsafe_allow_html=True)
@@ -248,11 +246,11 @@ if uploaded_file is not None:
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
-                # แสดงป้ายชื่อในกรอบแคปซูล (ถูก CSS บังคับให้อยู่ตรงกลาง)
+                # แสดงป้ายชื่อในกรอบแบบยืดเต็มความกว้าง (Full Width)
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # แสดงค่า Metric (ถูก CSS บังคับให้อยู่ตรงกลางคอลัมน์)
+                # แสดงค่า Metric
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
