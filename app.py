@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (ใช้ CSS Animation ที่ปลอดภัยแทน JS)
+# 2. Premium Enterprise-grade Custom CSS (เพิ่ม Global Fade-In Animation)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -18,12 +18,25 @@ st.markdown("""
     footer {visibility: hidden;}
     header {background-color: transparent !important;} 
     
-    /* Optimize container padding */
+    /* ✨ อนิเมชั่นหลักตอนโหลดหน้าจอ ✨ */
+    @keyframes fadeInUp {
+        0% {
+            opacity: 0;
+            transform: translateY(25px);
+        }
+        100% {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    /* Optimize container padding และยัด Animation เข้าไปที่กรอบใหญ่สุด */
     .block-container {
         padding-top: 1rem; 
         padding-bottom: 2rem;
         max-width: 90%; 
         font-family: 'Inter', 'Segoe UI', sans-serif;
+        animation: fadeInUp 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards; /* เล่นอนิเมชั่นตรงนี้ */
     }
     
     /* การจัดหน้าหัวข้อใหญ่ */
@@ -73,26 +86,6 @@ st.markdown("""
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
-    }
-
-    /* =========================================================
-       ✨ Safe CSS Fade-in Animation ✨
-       ใช้ Keyframes ค่อยๆ ปรากฏขึ้นมาตอนโหลด ปลอดภัย 100% ไม่ทำให้เว็บพัง
-       ========================================================= */
-    @keyframes smoothFadeIn {
-        from {
-            opacity: 0;
-            transform: translateY(15px);
-        }
-        to {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* นำ Animation ไปใส่ในองค์ประกอบหลักๆ */
-    .stMarkdown, div[class*="stImage"], div[data-testid="stMetric"] {
-        animation: smoothFadeIn 0.7s ease-out forwards;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -217,7 +210,6 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # ใช้ถ้วยรางวัลตามที่ตกลงกันไว้
                 if name == best_filter_name:
                     display_psnr = f"{data['psnr']:.2f} 🏆"
                 else:
