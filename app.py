@@ -57,25 +57,18 @@ st.markdown("""
     /* ✨ 1. ปรับรูปภาพให้นูน 3D เงาออกทางขวา และลดการเด้งตอน Hover ✨ */
     img {
         border-radius: 12px;
-        
-        /* ขอบบางๆ ด้านซ้าย/บนรับแสง ด้านขวา/ล่างมืดเป็นเงา */
         border-top: 1px solid rgba(255, 255, 255, 0.2);
         border-left: 1px solid rgba(255, 255, 255, 0.1);
         border-bottom: 2px solid rgba(0, 0, 0, 0.4);
         border-right: 2px solid rgba(0, 0, 0, 0.5);
-        
-        /* เปลี่ยนแกน X (ตัวแรก) ให้เป็นบวกเยอะๆ เพื่อดันเงาไปด้านขวา */
         box-shadow: 
             10px 10px 20px rgba(0, 0, 0, 0.4), 
             4px 4px 8px rgba(0, 0, 0, 0.2);
-            
         transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
     }
     
     img:hover {
-        /* ลดขนาดความเด้ง/ขยาย ให้ดูเนียนและไม่ใหญ่เกินไป */
         transform: translateY(-3px) scale(1.01); 
-        /* เงาขยายออกทางขวามากขึ้น */
         box-shadow: 
             18px 18px 30px rgba(0, 0, 0, 0.5), 
             6px 6px 12px rgba(0, 0, 0, 0.3);
@@ -84,28 +77,32 @@ st.markdown("""
 
     /* ✨ 2. แก้ปัญหาปุ่ม Fullscreen โดนบัง & ปรับตำแหน่ง ✨ */
     button[title="View fullscreen"] {
-        z-index: 999 !important; /* บังคับอยู่ชั้นบนสุด ทะลุรูปภาพ */
-        right: 15px !important;  /* ดันปุ่มเข้ามาจากขอบขวา */
-        top: 15px !important;    /* ดันปุ่มลงมาจากขอบบน */
-        background-color: rgba(0, 0, 0, 0.4) !important; /* เพิ่มพื้นหลังให้ปุ่มชัดเจนขึ้น */
+        z-index: 999 !important; 
+        right: 15px !important;  
+        top: 15px !important;    
+        background-color: rgba(0, 0, 0, 0.4) !important; 
         border-radius: 6px !important;
     }
     button[title="View fullscreen"]:hover {
         background-color: rgba(0, 0, 0, 0.7) !important;
     }
     
-    /* Center text for algorithm titles */
+    /* ✨ 3. ใส่กรอบให้ชื่อฟิลเตอร์ ขอบมนและขนาดกะทัดรัด ✨ */
     .algo-title {
         text-align: center;
         font-weight: 600;
-        margin-bottom: 1rem;
-        margin-top: 0.5rem;
-        font-size: 1rem;
+        margin: 0.5rem auto 1rem auto; /* จัดให้อยู่กึ่งกลางคอลัมน์ */
+        font-size: 0.9rem; /* ปรับขนาดให้เล็กลงนิดนึงจะได้ดูมินิมอล */
         color: #E2E8F0;
         letter-spacing: 0.5px;
+        width: fit-content; /* บังคับให้ขนาดกล่องพอดีกับตัวอักษร */
+        padding: 4px 16px; /* ระยะห่างกรอบ (บนล่าง 4px, ซ้ายขวา 16px) */
+        border-radius: 50px; /* ขอบโค้งมนแบบแคปซูล ไม่เหลี่ยมแน่นอน */
+        border: 1px solid rgba(255, 255, 255, 0.15); /* ขอบสีขาวจางๆ */
+        background-color: rgba(255, 255, 255, 0.05); /* พื้นหลังใสๆ */
     }
 
-    /* ✨ 3. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
+    /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
     div[data-testid="stMetric"]:has(div[data-testid="stMetricDelta"]) div[data-testid="stMetricValue"] {
         font-size: 1.6rem !important; 
     }
@@ -192,7 +189,6 @@ if uploaded_file is not None:
     with col_metrics:
         with st.container(border=True):
             st.markdown("<h5 style='color: #E2E8F0; margin-bottom: 1rem;'>Baseline Metrics</h5>", unsafe_allow_html=True)
-            # ตัวเลขตรงนี้จะใหญ่เท่าเดิม! เพราะไม่มี Delta
             st.metric(label="PSNR (Higher is better)", value=f"{base_psnr:.2f} dB")
             st.divider()
             st.metric(label="SSIM (Closer to 1 is better)", value=f"{base_ssim:.4f}")
@@ -242,7 +238,6 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # ตัวเลขตรงนี้จะเล็กลงตามที่คุณรีเควส
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
@@ -269,7 +264,7 @@ if uploaded_file is not None:
         )
 
 else:
-    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ---
+    # --- หน้าจอว่าง (Empty State) ---
     st.markdown("""
         <div style="
             display: flex;
