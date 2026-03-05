@@ -6,7 +6,7 @@ from skimage.metrics import peak_signal_noise_ratio as psnr_func
 from skimage.metrics import structural_similarity as ssim_func
 from PIL import Image
 import io
-import streamlit.components.v1 as components  # นำเข้า components สำหรับรัน JS
+import streamlit.components.v1 as components
 
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
@@ -69,7 +69,7 @@ st.markdown("""
         display: block !important;
         margin-left: auto !important;
         margin-right: auto !important;
-        cursor: zoom-in !important; /* เปลี่ยนเมาส์เป็นแว่นขยายให้รู้ว่ากดได้ */
+        cursor: zoom-in !important; /* เปลี่ยนเมาส์เป็นแว่นขยาย */
     }
     
     img:hover {
@@ -80,9 +80,16 @@ st.markdown("""
         border-top: 1px solid rgba(255, 255, 255, 0.3); 
     }
 
-    /* ✨ 2. ซ่อนปุ่ม Fullscreen เดิมของ Streamlit ทิ้งไป ✨ */
-    button[title="View fullscreen"] {
+    /* ✨ 2. ซ่อนปุ่ม Fullscreen เดิมของ Streamlit ทิ้งไป (อัปเดตให้บังคับซ่อน 100%) ✨ */
+    button[title="View fullscreen"],
+    button[title="Fullscreen"],
+    [data-testid="StyledFullScreenButton"],
+    div[data-testid="stImage"] button,
+    .stImage > div > button {
         display: none !important;
+        visibility: hidden !important;
+        opacity: 0 !important;
+        pointer-events: none !important;
     }
     
     /* ✨ 3. ป้ายชื่ออัลกอริทึม ขยายให้กว้างเท่ารูปภาพ ✨ */
@@ -127,11 +134,9 @@ components.html("""
     <script>
     const parentDoc = window.parent.document;
     
-    // ตรวจสอบว่าเคยสร้าง Lightbox ไปแล้วหรือยัง ถ้ายังให้สร้างใหม่
     if (!parentDoc.getElementById('custom-lightbox-container')) {
         const lightbox = parentDoc.createElement('div');
         lightbox.id = 'custom-lightbox-container';
-        // ดีไซน์ของหน้าจอตอนที่ขยายรูป
         lightbox.style.cssText = `
             display: none;
             position: fixed;
@@ -140,15 +145,14 @@ components.html("""
             top: 0;
             width: 100vw;
             height: 100vh;
-            background-color: rgba(15, 23, 42, 0.85); /* สีพื้นหลังโปร่งแสง */
-            backdrop-filter: blur(8px); /* เบลอพื้นหลัง */
+            background-color: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(8px);
             align-items: center;
             justify-content: center;
             opacity: 0;
             transition: opacity 0.3s ease;
         `;
         
-        // ใส่รูปและปุ่มกากบาท X
         lightbox.innerHTML = `
             <span id="lightbox-close" style="position: absolute; top: 20px; right: 40px; color: #F8FAFC; font-size: 45px; font-weight: bold; cursor: pointer; z-index: 1000000; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">&times;</span>
             <img id="lightbox-img" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: none !important; border: none !important; cursor: default;">
@@ -159,24 +163,20 @@ components.html("""
         const lbImg = parentDoc.getElementById('lightbox-img');
         const closeBtn = parentDoc.getElementById('lightbox-close');
         
-        // ฟังก์ชันปิดรูป
         const closeLightbox = () => {
             lightbox.style.opacity = '0';
             setTimeout(() => { lightbox.style.display = 'none'; }, 300);
         };
         
-        // ปิดเมื่อกดกากบาท หรือกดพื้นที่ว่าง
         closeBtn.onclick = closeLightbox;
         lightbox.onclick = function(e) { 
             if(e.target !== lbImg) { closeLightbox(); }
         };
         
-        // ดักจับการ ดับเบิ้ลคลิก ที่รูปภาพทั้งหมดในหน้าเว็บ
         parentDoc.addEventListener('dblclick', function(e) {
             if (e.target.tagName === 'IMG' && e.target.id !== 'lightbox-img') {
-                lbImg.src = e.target.src; // คัดลอกรูปจากต้นฉบับมาใส่ Lightbox
+                lbImg.src = e.target.src; 
                 lightbox.style.display = 'flex';
-                // หน่วงเวลาเล็กน้อยเพื่อให้ CSS Transition ทำงาน
                 setTimeout(() => { lightbox.style.opacity = '1'; }, 10);
             }
         });
@@ -278,7 +278,6 @@ if uploaded_file is not None:
         max_psnr = 0
         best_img = None
 
-        # คำนวณหาที่ 1 ให้เสร็จก่อน
         for name, f_img in filters.items():
             current_psnr = psnr_func(img_clean, f_img)
             try:
@@ -299,14 +298,12 @@ if uploaded_file is not None:
                 best_filter_name = name
                 best_img = f_img
 
-        # วาดหน้าจอ UI
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                # แสดงค่า Metric
                 st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
