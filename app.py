@@ -10,7 +10,7 @@ import io
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS (✨ Cascade Animation ✨)
+# 2. Premium Enterprise-grade Custom CSS (Clean & Static)
 st.markdown("""
     <style>
     /* Remove default Streamlit branding but KEEP header for sidebar toggle */
@@ -54,7 +54,7 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* รูปภาพให้มีขอบเนียนๆ และมีเงาบางๆ */
+    /* รูปภาพให้มีขอบเนียนๆ และมีเงาบางๆ (เหลือไว้แค่ Hover Effect ตอนเอาเมาส์ชี้) */
     img {
         border-radius: 8px;
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
@@ -73,46 +73,6 @@ st.markdown("""
         font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
-    }
-
-    /* =========================================================
-       ✨ Cascade Fade & Slide Up Animation ✨
-       ทำให้เห็นชัดเจนขึ้น โดยเด้งขึ้นมา 40px และไล่ระดับทีละ Column
-       ========================================================= */
-    @keyframes cascadeUp {
-        0% {
-            opacity: 0;
-            transform: translateY(40px); /* เพิ่มระยะให้เห็นชัดๆ ว่ามันเลื่อนขึ้น */
-        }
-        100% {
-            opacity: 1;
-            transform: translateY(0);
-        }
-    }
-
-    /* ใส่ให้หัวข้อย่อย */
-    .section-title {
-        opacity: 0;
-        animation: cascadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    /* เจาะจงใส่ให้ Column ของ Streamlit (ไล่ทีละคอลัมน์) */
-    div[data-testid="column"] {
-        opacity: 0;
-        animation: cascadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    }
-
-    /* ตั้งค่าดีเลย์ให้มันค่อยๆ โผล่จากซ้ายไปขวา (Staggering Effect) */
-    div[data-testid="column"]:nth-child(1) { animation-delay: 0.1s; }
-    div[data-testid="column"]:nth-child(2) { animation-delay: 0.25s; }
-    div[data-testid="column"]:nth-child(3) { animation-delay: 0.4s; }
-    div[data-testid="column"]:nth-child(4) { animation-delay: 0.55s; }
-    div[data-testid="column"]:nth-child(5) { animation-delay: 0.7s; }
-
-    /* ให้กล่องแจ้งเตือนสีเขียวเด้งขึ้นมาท้ายสุด */
-    div[data-testid="stAlert"] {
-        opacity: 0;
-        animation: cascadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) 0.8s forwards;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -237,12 +197,8 @@ if uploaded_file is not None:
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                if name == best_filter_name:
-                    display_psnr = f"{data['psnr']:.2f} 🏆"
-                else:
-                    display_psnr = f"{data['psnr']:.2f}"
-                
-                st.metric(label="PSNR (dB)", value=display_psnr, delta=f"{data['psnr_delta']:.2f}")
+                # แสดงค่าปกติตรงๆ แบบไม่มีสัญลักษณ์ถ้วยรางวัลแล้ว
+                st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
     # --- Section 3: Optimal Result & Export ---
@@ -268,7 +224,7 @@ if uploaded_file is not None:
         )
 
 else:
-    # --- หน้าจอว่าง (Empty State) ปรับใส่ Class ให้มันขยับได้ด้วย ---
+    # --- หน้าจอว่าง (Empty State) แบบนิ่งๆ ไม่มีอนิเมชั่น ---
     st.markdown("""
         <div style="
             display: flex;
@@ -278,8 +234,6 @@ else:
             min-height: 50vh;
             text-align: center;
             color: #94A3B8;
-            opacity: 0;
-            animation: cascadeUp 0.8s cubic-bezier(0.16, 1, 0.3, 1) forwards;
         ">
             <div style="
                 padding: 2.5rem 4rem;
