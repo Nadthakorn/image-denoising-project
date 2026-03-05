@@ -6,6 +6,7 @@ from skimage.metrics import peak_signal_noise_ratio as psnr_func
 from skimage.metrics import structural_similarity as ssim_func
 from PIL import Image
 import io
+import streamlit.components.v1 as components  # นำเข้า components สำหรับรัน JS
 
 # 1. Page Configuration
 st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
@@ -13,7 +14,7 @@ st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 # 2. Premium Enterprise-grade Custom CSS
 st.markdown("""
     <style>
-    /* Remove default Streamlit branding but KEEP header for sidebar toggle */
+    /* Remove default Streamlit branding */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {background-color: transparent !important;} 
@@ -68,6 +69,7 @@ st.markdown("""
         display: block !important;
         margin-left: auto !important;
         margin-right: auto !important;
+        cursor: zoom-in !important; /* เปลี่ยนเมาส์เป็นแว่นขยายให้รู้ว่ากดได้ */
     }
     
     img:hover {
@@ -78,16 +80,9 @@ st.markdown("""
         border-top: 1px solid rgba(255, 255, 255, 0.3); 
     }
 
-    /* ✨ 2. แก้ปัญหาปุ่ม Fullscreen โดนบัง & ปรับตำแหน่ง ✨ */
+    /* ✨ 2. ซ่อนปุ่ม Fullscreen เดิมของ Streamlit ทิ้งไป ✨ */
     button[title="View fullscreen"] {
-        z-index: 999 !important; 
-        right: 15px !important;  
-        top: 15px !important;    
-        background-color: rgba(0, 0, 0, 0.4) !important; 
-        border-radius: 6px !important;
-    }
-    button[title="View fullscreen"]:hover {
-        background-color: rgba(0, 0, 0, 0.7) !important;
+        display: none !important;
     }
     
     /* ✨ 3. ป้ายชื่ออัลกอริทึม ขยายให้กว้างเท่ารูปภาพ ✨ */
@@ -98,16 +93,16 @@ st.markdown("""
         font-size: 0.9rem; 
         color: #E2E8F0;
         letter-spacing: 0.5px;
-        width: 100%; /* บังคับให้กว้าง 100% เท่ากับรูปภาพ */
-        box-sizing: border-box; /* ป้องกันไม่ให้ขอบล้น */
+        width: 100%; 
+        box-sizing: border-box; 
         padding: 6px 10px; 
-        border-radius: 10px; /* โค้งมนพอดีๆ รับกับขอบรูป */
+        border-radius: 10px; 
         border: 1px solid rgba(255, 255, 255, 0.15); 
         background-color: rgba(255, 255, 255, 0.05); 
         display: block !important; 
     }
 
-    /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" (กล่องที่มีลูกศรสีเขียว) ✨ */
+    /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" ✨ */
     div[data-testid="stMetric"]:has(div[data-testid="stMetricDelta"]) div[data-testid="stMetricValue"] {
         font-size: 1.6rem !important; 
     }
@@ -126,6 +121,68 @@ st.markdown("""
     }
     </style>
 """, unsafe_allow_html=True)
+
+# ✨ 6. แทรก JavaScript เพื่อทำระบบ ดับเบิ้ลคลิกดูรูป (Double-click Lightbox) ✨
+components.html("""
+    <script>
+    const parentDoc = window.parent.document;
+    
+    // ตรวจสอบว่าเคยสร้าง Lightbox ไปแล้วหรือยัง ถ้ายังให้สร้างใหม่
+    if (!parentDoc.getElementById('custom-lightbox-container')) {
+        const lightbox = parentDoc.createElement('div');
+        lightbox.id = 'custom-lightbox-container';
+        // ดีไซน์ของหน้าจอตอนที่ขยายรูป
+        lightbox.style.cssText = `
+            display: none;
+            position: fixed;
+            z-index: 999999;
+            left: 0;
+            top: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(15, 23, 42, 0.85); /* สีพื้นหลังโปร่งแสง */
+            backdrop-filter: blur(8px); /* เบลอพื้นหลัง */
+            align-items: center;
+            justify-content: center;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        `;
+        
+        // ใส่รูปและปุ่มกากบาท X
+        lightbox.innerHTML = `
+            <span id="lightbox-close" style="position: absolute; top: 20px; right: 40px; color: #F8FAFC; font-size: 45px; font-weight: bold; cursor: pointer; z-index: 1000000; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">&times;</span>
+            <img id="lightbox-img" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: none !important; border: none !important; cursor: default;">
+        `;
+        
+        parentDoc.body.appendChild(lightbox);
+        
+        const lbImg = parentDoc.getElementById('lightbox-img');
+        const closeBtn = parentDoc.getElementById('lightbox-close');
+        
+        // ฟังก์ชันปิดรูป
+        const closeLightbox = () => {
+            lightbox.style.opacity = '0';
+            setTimeout(() => { lightbox.style.display = 'none'; }, 300);
+        };
+        
+        // ปิดเมื่อกดกากบาท หรือกดพื้นที่ว่าง
+        closeBtn.onclick = closeLightbox;
+        lightbox.onclick = function(e) { 
+            if(e.target !== lbImg) { closeLightbox(); }
+        };
+        
+        // ดักจับการ ดับเบิ้ลคลิก ที่รูปภาพทั้งหมดในหน้าเว็บ
+        parentDoc.addEventListener('dblclick', function(e) {
+            if (e.target.tagName === 'IMG' && e.target.id !== 'lightbox-img') {
+                lbImg.src = e.target.src; // คัดลอกรูปจากต้นฉบับมาใส่ Lightbox
+                lightbox.style.display = 'flex';
+                // หน่วงเวลาเล็กน้อยเพื่อให้ CSS Transition ทำงาน
+                setTimeout(() => { lightbox.style.opacity = '1'; }, 10);
+            }
+        });
+    }
+    </script>
+""", height=0, width=0)
 
 # 3. Application Sidebar
 with st.sidebar:
@@ -246,7 +303,6 @@ if uploaded_file is not None:
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
-                # แสดงป้ายชื่อในกรอบแบบยืดเต็มความกว้าง (Full Width)
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
