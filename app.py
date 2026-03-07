@@ -1,25 +1,30 @@
-import streamlit as st
-import cv2
-import numpy as np
-from skimage import util
-from skimage.metrics import peak_signal_noise_ratio as psnr_func
-from skimage.metrics import structural_similarity as ssim_func
-from PIL import Image
-import io
-import streamlit.components.v1 as components
+# ---------------------------------------------------------
+# บล็อกที่ 1: นำเข้าไลบรารีและตั้งค่าหน้าเว็บ
+# ---------------------------------------------------------
+import streamlit as st  # เครื่องมือหลักสำหรับสร้าง Web App
+import cv2  # จัดการภาพด้วย OpenCV
+import numpy as np  # จัดการอาร์เรย์และตัวเลข
+from skimage import util  # เครื่องมือสร้างสัญญาณรบกวน (Noise)
+from skimage.metrics import peak_signal_noise_ratio as psnr_func  # ฟังก์ชันคิดคะแนน PSNR
+from skimage.metrics import structural_similarity as ssim_func  # ฟังก์ชันคิดคะแนน SSIM
+from PIL import Image  # จัดการไฟล์ภาพสำหรับดาวน์โหลด
+import io  # แปลงภาพเป็นกระแสข้อมูล (Byte) เพื่อดาวน์โหลด
 
-# 1. Page Configuration
-st.set_page_config(page_title="Image Denoising Project", layout="wide")
+# ตั้งค่าหน้าเว็บให้แสดงผลแบบเต็มจอ (Wide) และตั้งชื่อแท็บ
+st.set_page_config(page_title="Image Restoration Analytics", layout="wide")
 
-# 2. Premium Enterprise-grade Custom CSS
+# ---------------------------------------------------------
+# บล็อกที่ 2: ตกแต่งหน้าตาเว็บด้วย CSS
+# ---------------------------------------------------------
+# ใช้ HTML/CSS ฝังลงไปเพื่อซ่อนโลโก้และจัดความสวยงาม
 st.markdown("""
     <style>
-    /* Remove default Streamlit branding but KEEP header for sidebar toggle */
+    /* ซ่อนเมนูเริ่มต้นของ Streamlit แต่ยังให้กดเปิด Sidebar ได้ */
     #MainMenu {visibility: hidden;}
     footer {visibility: hidden;}
     header {background-color: transparent !important;} 
     
-    /* Optimize container padding */
+    /* จัดระยะขอบหน้าจอและเปลี่ยนฟอนต์ */
     .block-container {
         padding-top: 1rem; 
         padding-bottom: 2rem;
@@ -27,7 +32,7 @@ st.markdown("""
         font-family: 'Inter', 'Segoe UI', sans-serif;
     }
     
-    /* การจัดหน้าหัวข้อใหญ่ */
+    /* ตกแต่งส่วนหัวข้อใหญ่ */
     .main-header-container {
         margin-bottom: 2.5rem;
         padding-bottom: 1.5rem;
@@ -44,7 +49,7 @@ st.markdown("""
         color: #94A3B8;
     }
 
-    /* หัวข้อย่อย (Section Headers) */
+    /* ตกแต่งหัวข้อย่อยให้มีขีดสีฟ้าด้านหน้า */
     .section-title {
         font-size: 1.3rem;
         font-weight: 600;
@@ -55,157 +60,51 @@ st.markdown("""
         color: #F8FAFC;
     }
     
-    /* ✨ 1. รูปภาพ 3D นูน เงาออกทางขวา ✨ */
+    /* ทำมุมรูปภาพให้โค้งมนและมีเงา เวลาเอาเมาส์ชี้ให้ขยับได้ */
     img {
-        border-radius: 12px;
-        border-top: 1px solid rgba(255, 255, 255, 0.2);
-        border-left: 1px solid rgba(255, 255, 255, 0.1);
-        border-bottom: 2px solid rgba(0, 0, 0, 0.4);
-        border-right: 2px solid rgba(0, 0, 0, 0.5);
-        box-shadow: 
-            10px 10px 20px rgba(0, 0, 0, 0.4), 
-            4px 4px 8px rgba(0, 0, 0, 0.2);
-        transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
-        display: block !important;
-        margin-left: auto !important;
-        margin-right: auto !important;
-        cursor: zoom-in !important; /* เปลี่ยนเมาส์เป็นแว่นขยาย */
+        border-radius: 8px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15); 
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
     }
-    
     img:hover {
-        transform: translateY(-3px) scale(1.01); 
-        box-shadow: 
-            18px 18px 30px rgba(0, 0, 0, 0.5), 
-            6px 6px 12px rgba(0, 0, 0, 0.3);
-        border-top: 1px solid rgba(255, 255, 255, 0.3); 
-    }
-
-    /* ✨ 2. ลบปุ่ม Fullscreen ด้วยการอ้างอิงระดับโครงสร้าง (Structural Override) ✨ */
-    /* 2.1 ซ่อนกล่อง Overlay และปุ่มใดๆ ก็ตามที่อยู่ใน stImage */
-    [data-testid="stImage"] > div:not(:first-child),
-    [data-testid="stImage"] button {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
-        width: 0 !important;
-        height: 0 !important;
-        pointer-events: none !important;
-    }
-    /* 2.2 ซ่อนภาพ SVG (ตัวไอคอนขยาย) ภายใน stImage ป้องกันการคลิก */
-    [data-testid="stImage"] svg {
-        display: none !important;
-        visibility: hidden !important;
-        opacity: 0 !important;
+        transform: translateY(-2px); 
+        box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
     }
     
-    /* ✨ 3. ป้ายชื่ออัลกอริทึม ขยายให้กว้างเท่ารูปภาพ ✨ */
+    /* จัดตัวหนังสือชื่อวิธีฟิลเตอร์ให้อยู่ตรงกลาง */
     .algo-title {
         text-align: center;
         font-weight: 600;
-        margin: 0.5rem 0 1rem 0; 
-        font-size: 0.9rem; 
+        margin-bottom: 1rem;
+        font-size: 1rem;
         color: #E2E8F0;
         letter-spacing: 0.5px;
-        width: 100%; 
-        box-sizing: border-box; 
-        padding: 6px 10px; 
-        border-radius: 10px; 
-        border: 1px solid rgba(255, 255, 255, 0.15); 
-        background-color: rgba(255, 255, 255, 0.05); 
-        display: block !important; 
-    }
-
-    /* ✨ 4. ลดขนาดตัวเลข "เฉพาะกล่องด้านล่าง" ✨ */
-    div[data-testid="stMetric"]:has(div[data-testid="stMetricDelta"]) div[data-testid="stMetricValue"] {
-        font-size: 1.6rem !important; 
-    }
-    div[data-testid="stMetricDelta"] {
-        font-size: 0.9rem !important; 
-    }
-    div[data-testid="stMetricDelta"] svg {
-        width: 0.9rem !important;
-        height: 0.9rem !important;
-    }
-
-    /* ✨ 5. จัดองค์ประกอบหลักภายในคอลัมน์เปรียบเทียบให้อยู่ตรงกลางเสมอกัน ✨ */
-    div[data-testid="stVerticalBlock"]:has(.algo-title) > div[data-testid="column"] > div > div {
-        align-items: center !important; 
-        text-align: center !important;  
     }
     </style>
 """, unsafe_allow_html=True)
 
-# ✨ 6. แทรก JavaScript เพื่อทำระบบ ดับเบิ้ลคลิกดูรูป (Double-click Lightbox) ✨
-components.html("""
-    <script>
-    const parentDoc = window.parent.document;
-    
-    if (!parentDoc.getElementById('custom-lightbox-container')) {
-        const lightbox = parentDoc.createElement('div');
-        lightbox.id = 'custom-lightbox-container';
-        lightbox.style.cssText = `
-            display: none;
-            position: fixed;
-            z-index: 999999;
-            left: 0;
-            top: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: rgba(15, 23, 42, 0.85);
-            backdrop-filter: blur(8px);
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.3s ease;
-        `;
-        
-        lightbox.innerHTML = `
-            <span id="lightbox-close" style="position: absolute; top: 20px; right: 40px; color: #F8FAFC; font-size: 45px; font-weight: bold; cursor: pointer; z-index: 1000000; text-shadow: 0 2px 10px rgba(0,0,0,0.5);">&times;</span>
-            <img id="lightbox-img" style="max-width: 90%; max-height: 90%; object-fit: contain; border-radius: 12px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); transform: none !important; border: none !important; cursor: default;">
-        `;
-        
-        parentDoc.body.appendChild(lightbox);
-        
-        const lbImg = parentDoc.getElementById('lightbox-img');
-        const closeBtn = parentDoc.getElementById('lightbox-close');
-        
-        const closeLightbox = () => {
-            lightbox.style.opacity = '0';
-            setTimeout(() => { lightbox.style.display = 'none'; }, 300);
-        };
-        
-        closeBtn.onclick = closeLightbox;
-        lightbox.onclick = function(e) { 
-            if(e.target !== lbImg) { closeLightbox(); }
-        };
-        
-        parentDoc.addEventListener('dblclick', function(e) {
-            if (e.target.tagName === 'IMG' && e.target.id !== 'lightbox-img') {
-                lbImg.src = e.target.src; 
-                lightbox.style.display = 'flex';
-                setTimeout(() => { lightbox.style.opacity = '1'; }, 10);
-            }
-        });
-    }
-    </script>
-""", height=0, width=0)
-
-# 3. Application Sidebar
+# ---------------------------------------------------------
+# บล็อกที่ 3: แถบเมนูด้านข้าง (Sidebar) สำหรับตั้งค่า
+# ---------------------------------------------------------
 with st.sidebar:
     st.title("Configuration")
     st.markdown("Configure noise parameters and upload source imagery.")
-    st.divider()
+    st.divider() # เส้นคั่น
     
+    # ส่วนรับอัปโหลดไฟล์ภาพ
     st.subheader("Source Image")
     uploaded_file = st.file_uploader("Upload an image file (JPG, PNG)", type=["jpg", "jpeg", "png"])
     
     st.divider()
+    
+    # ส่วนเลือกตั้งค่า Noise
     st.subheader("Noise Simulation")
     noise_type = st.selectbox(
         "Noise Distribution", 
         ["Gaussian", "Salt & Pepper", "Speckle", "Poisson"]
     )
     
+    # สไลเดอร์ปรับระดับความรุนแรงของ Noise
     noise_level = st.slider(
         "Noise Variance / Amount", 
         min_value=0.0, 
@@ -214,7 +113,9 @@ with st.sidebar:
         step=0.01
     )
 
-# 4. Main Content Dashboard
+# ---------------------------------------------------------
+# บล็อกที่ 4: ส่วนหัวของหน้าเว็บหลัก
+# ---------------------------------------------------------
 st.markdown("""
     <div class="main-header-container">
         <div class="main-title">Image Restoration & Denoising Analytics</div>
@@ -222,15 +123,19 @@ st.markdown("""
     </div>
 """, unsafe_allow_html=True)
 
+# ---------------------------------------------------------
+# บล็อกที่ 5: ระบบประมวลผล (ทำงานต่อเมื่อมีรูปถูกอัปโหลด)
+# ---------------------------------------------------------
 if uploaded_file is not None:
-    # --- Image Processing ---
+    # อ่านไฟล์ภาพที่ผู้ใช้อัปโหลดมาเป็นไบต์ แล้วแปลงเป็นอาเรย์สี RGB
     file_bytes = np.asarray(bytearray(uploaded_file.read()), dtype=np.uint8)
     img_clean = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
     img_clean = cv2.cvtColor(img_clean, cv2.COLOR_BGR2RGB)
     
-    # Normalize for skimage
+    # ปรับสเกลภาพเป็น 0-1 สำหรับส่งให้ฟังก์ชันใส่ Noise
     img_norm = img_clean.astype(float) / 255.0
     
+    # เช็คว่าผู้ใช้เลือก Noise แบบไหน แล้วจำลองแบบนั้นใส่ภาพ
     if noise_type == "Gaussian":
         noisy = util.random_noise(img_norm, mode='gaussian', var=noise_level)
     elif noise_type == "Salt & Pepper":
@@ -240,18 +145,23 @@ if uploaded_file is not None:
     else:
         noisy = util.random_noise(img_norm, mode='poisson')
     
+    # แปลงภาพที่ติด Noise กลับเป็นสเกล 0-255
     img_noisy = (noisy * 255).astype(np.uint8)
     
-    # Baseline Metrics
+    # คำนวณคะแนนพื้นฐาน (ภาพต้นฉบับ vs ภาพติด Noise)
     base_psnr = psnr_func(img_clean, img_noisy)
+    # ใช้ try-except กัน error เผื่อรูปเล็กเกินไปสำหรับ SSIM
     try:
         base_ssim = ssim_func(img_clean, img_noisy, channel_axis=2, data_range=255)
     except Exception:
         base_ssim = ssim_func(img_clean, img_noisy, channel_axis=2, win_size=3, data_range=255)
 
-    # --- Section 1: Baseline Analysis ---
+    # ---------------------------------------------------------
+    # บล็อกที่ 6: แสดงภาพต้นฉบับเปรียบเทียบกับภาพติด Noise
+    # ---------------------------------------------------------
     st.markdown("<div class='section-title'>1. Baseline Assessment</div>", unsafe_allow_html=True)
     
+    # แบ่งพื้นที่เป็น 3 คอลัมน์ (ภาพเดิม, ภาพ Noise, กล่องคะแนน)
     col_img1, col_img2, col_metrics = st.columns([1.5, 1.5, 1])
     
     with col_img1:
@@ -261,16 +171,22 @@ if uploaded_file is not None:
         st.image(img_noisy, caption=f"Degraded Signal ({noise_type})", use_container_width=True)
         
     with col_metrics:
+        # แสดงกล่องคะแนน PSNR และ SSIM ของภาพที่ติด Noise
         with st.container(border=True):
             st.markdown("<h5 style='color: #E2E8F0; margin-bottom: 1rem;'>Baseline Metrics</h5>", unsafe_allow_html=True)
             st.metric(label="PSNR (Higher is better)", value=f"{base_psnr:.2f} dB")
             st.divider()
             st.metric(label="SSIM (Closer to 1 is better)", value=f"{base_ssim:.4f}")
 
-    # --- Section 2: Algorithm Comparison ---
+    # ---------------------------------------------------------
+    # บล็อกที่ 7: ตัวกรองภาพและเปรียบเทียบคะแนน
+    # ---------------------------------------------------------
     st.markdown("<div class='section-title'>2. Algorithm Performance Comparison</div>", unsafe_allow_html=True)
     
+    # โชว์วงล้อโหลดข้อมูลระหว่างที่ระบบกำลังคิดเลข
     with st.spinner('Processing spatial filters and computing structural similarities...'):
+        
+        # จัดเตรียมฟิลเตอร์ทั้ง 5 วิธีด้วย OpenCV
         filters = {
             "Mean Filter": cv2.blur(img_noisy, (5, 5)),
             "Gaussian Filter": cv2.GaussianBlur(img_noisy, (5, 5), 0),
@@ -284,6 +200,7 @@ if uploaded_file is not None:
         max_psnr = 0
         best_img = None
 
+        # วนลูปคิดคะแนน PSNR และ SSIM ให้ทุกฟิลเตอร์
         for name, f_img in filters.items():
             current_psnr = psnr_func(img_clean, f_img)
             try:
@@ -291,6 +208,7 @@ if uploaded_file is not None:
             except Exception:
                 current_ssim = ssim_func(img_clean, f_img, channel_axis=2, win_size=3, data_range=255)
             
+            # เก็บข้อมูลคะแนนและส่วนต่าง (Delta) ไว้แสดงผล
             filter_results[name] = {
                 "img": f_img,
                 "psnr": current_psnr,
@@ -299,34 +217,49 @@ if uploaded_file is not None:
                 "ssim_delta": current_ssim - base_ssim
             }
 
+            # หาว่าวิธีไหนได้คะแนน PSNR สูงสุด
             if current_psnr > max_psnr:
                 max_psnr = current_psnr
                 best_filter_name = name
                 best_img = f_img
 
+        # แบ่งเป็น 5 คอลัมน์สำหรับโชว์ 5 วิธี
         f_cols = st.columns(5)
         for i, (name, data) in enumerate(filter_results.items()):
             with f_cols[i]:
+                # โชว์ชื่อวิธีและรูปภาพ
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
                 st.image(data["img"], use_container_width=True)
                 
-                st.metric(label="PSNR (dB)", value=f"{data['psnr']:.2f}", delta=f"{data['psnr_delta']:.2f}")
+                # ถ้าวิธีนี้ได้คะแนนสูงสุด ให้เติมสัญลักษณ์ไฟ 🔥
+                if name == best_filter_name:
+                    display_psnr = f"{data['psnr']:.2f} 🔥"
+                else:
+                    display_psnr = f"{data['psnr']:.2f}"
+                
+                # โชว์คะแนนพร้อมตัวเปรียบเทียบว่าดีขึ้นเท่าไหร่
+                st.metric(label="PSNR (dB)", value=display_psnr, delta=f"{data['psnr_delta']:.2f}")
                 st.metric(label="SSIM", value=f"{data['ssim']:.4f}", delta=f"{data['ssim_delta']:.4f}")
 
-    # --- Section 3: Optimal Result & Export ---
+    # ---------------------------------------------------------
+    # บล็อกที่ 8: สรุปผลลัพธ์และปุ่มดาวน์โหลด
+    # ---------------------------------------------------------
     st.markdown("<div class='section-title'>3. Optimal Restoration Result</div>", unsafe_allow_html=True)
     
     res_col1, res_col2 = st.columns([3, 1])
     
     with res_col1:
+        # โชว์กล่องข้อความสีเขียวสรุปวิธีที่ดีที่สุด
         st.success(f"Algorithm with highest peak signal-to-noise ratio: **{best_filter_name}** ({max_psnr:.2f} dB)")
     
     with res_col2:
+        # เตรียมแปลงรูปที่ดีที่สุดกลับเป็นไฟล์ .png
         img_pil = Image.fromarray(best_img)
         buf = io.BytesIO()
         img_pil.save(buf, format="PNG")
         byte_im = buf.getvalue()
         
+        # สร้างปุ่มสำหรับกดดาวน์โหลดภาพไปที่เครื่อง
         st.download_button(
             label="Download Restored Image",
             data=byte_im,
@@ -335,8 +268,10 @@ if uploaded_file is not None:
             use_container_width=True
         )
 
+# ---------------------------------------------------------
+# บล็อกที่ 9: หน้าจอ Empty State (โชว์ตอนที่ยังไม่มีรูปอัปโหลด)
+# ---------------------------------------------------------
 else:
-    # --- หน้าจอว่าง (Empty State) ---
     st.markdown("""
         <div style="
             display: flex;
