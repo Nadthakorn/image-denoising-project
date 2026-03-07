@@ -165,10 +165,10 @@ if uploaded_file is not None:
     col_img1, col_img2, col_metrics = st.columns([1.5, 1.5, 1])
     
     with col_img1:
-        st.image(img_clean, caption="Original Signal (Ground Truth)", use_container_width=True)
+        st.image(img_clean, caption="Original Signal (Ground Truth)", width="stretch")
         
     with col_img2:
-        st.image(img_noisy, caption=f"Degraded Signal ({noise_type})", use_container_width=True)
+        st.image(img_noisy, caption=f"Degraded Signal ({noise_type})", width="stretch")
         
     with col_metrics:
         # แสดงกล่องคะแนน PSNR และ SSIM ของภาพที่ติด Noise
@@ -229,7 +229,7 @@ if uploaded_file is not None:
             with f_cols[i]:
                 # โชว์ชื่อวิธีและรูปภาพ
                 st.markdown(f"<div class='algo-title'>{name}</div>", unsafe_allow_html=True)
-                st.image(data["img"], use_container_width=True)
+                st.image(data["img"], width="stretch")
                 
                 # ถ้าวิธีนี้ได้คะแนนสูงสุด ให้เติมสัญลักษณ์ไฟ 🔥
                 if name == best_filter_name:
@@ -265,7 +265,7 @@ if uploaded_file is not None:
             data=byte_im,
             file_name=f"restored_{best_filter_name.replace(' ', '_')}.png",
             mime="image/png",
-            use_container_width=True
+            width="stretch"
         )
 
 # ---------------------------------------------------------
